@@ -28,6 +28,9 @@ func main() {
 		c.HTML(http.StatusOK, "index.tmpl.html", nil)
 	})
 
+	router.GET("/new", func(c *gin.Context) {
+		c.String(http.StatusOK, "name")
+	})
 	router.GET("/Ken", func(c *gin.Context) {
 		c.String(http.StatusOK, ken.Insert())
 	})
