@@ -20,20 +20,24 @@ func main() {
 
 	router := gin.New()
 	router.Use(gin.Logger())
-	router.LoadHTMLGlob("templates/*.tmpl.html")
+	router.LoadHTMLGlob("templates/*.html")
 	router.Static("/static", "static")
 
 	router.GET("/", func(c *gin.Context) {
 
-		c.HTML(http.StatusOK, "index.tmpl.html", nil)
+		c.HTML(http.StatusOK, "index.html", nil)
 	})
 
 	router.GET("/new", func(c *gin.Context) {
-		c.String(http.StatusOK, "name")
+		c.String(http.StatusOK, "namees")
 	})
 	router.GET("/Ken", func(c *gin.Context) {
 		c.String(http.StatusOK, ken.Insert())
 	})
 
+	router.POST("/verifyIdToken", ken.RouteVerifyIDToken)
+
 	router.Run(":" + port)
 }
+
+// clr && go build -o bin/go-getting-started -v . && heroku local web
