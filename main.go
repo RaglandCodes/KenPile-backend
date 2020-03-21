@@ -28,10 +28,10 @@ func main() {
 	}
 
 	router := gin.New()
-	router.Use(gin.Logger())
-	router.Use(CORSMiddleware())
-	router.LoadHTMLGlob("templates/*.html")
-	router.Static("/static", "static")
+	//router.Use(gin.Logger())
+	//router.Use(CORSMiddleware())
+	//router.LoadHTMLGlob("templates/*.html")
+	//router.Static("/static", "static")
 
 	router.GET("/", func(c *gin.Context) {
 
@@ -45,6 +45,7 @@ func main() {
 		c.String(http.StatusOK, ken.Insert())
 	})
 
+	router.POST("/createNewNote", ken.RouteCreateNewNote)
 	router.POST("/verifyIdToken", ken.RouteVerifyIDToken)
 
 	router.Run(":" + port)

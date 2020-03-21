@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 //CheckIfUserExists returns true|false and an error
@@ -31,8 +33,6 @@ func CheckIfUserExists(emailToFind string) (bool, error) {
 			fmt.Println(err)
 			return false, errors.New("Could't scan")
 		}
-		//res += email
-		fmt.Println(count)
 
 		if 0 == count {
 			return false, nil
@@ -80,6 +80,38 @@ func AddNewUser(email string) string {
 	fmt.Println(insertRes)
 
 	return "ADDED"
+}
+
+//RouteCreateNewNote returns OK or ERROR
+func RouteCreateNewNote(c *gin.Context) {
+
+	fmt.Println(c.Request.Body)
+	fmt.Println(" bdy nn")
+	fmt.Println(c.Cookie("gc1"))
+	fmt.Println(c.Cookie("gc2"))
+	fmt.Println(c.Cookie("gc3"))
+	fmt.Println(c.Cookie("gc5"))
+	fmt.Println(c.Cookie("gc6"))
+	c4, err := c.Cookie("gc4")
+
+	if nil != err {
+		fmt.Println("c4 error")
+		fmt.Println(err)
+	}
+
+	fmt.Println(c4)
+
+	_, err = sql.Open("postgres", os.Getenv("DBU"))
+
+	if nil != err {
+		fmt.Println(err)
+		fmt.Println("error in db open new note")
+		SendResponse(c, "ERROR", "Error in opening database")
+	}
+
+	//BOMB
+	SendResponse(c, "OK", "Created")
+
 }
 
 //Insert a random
