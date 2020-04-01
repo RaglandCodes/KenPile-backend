@@ -85,23 +85,22 @@ func AddNewUser(email string) string {
 //RouteCreateNewNote returns OK or ERROR
 func RouteCreateNewNote(c *gin.Context) {
 
-	fmt.Println(c.Request.Body)
-	fmt.Println(" bdy nn")
-	fmt.Println(c.Cookie("gc1"))
-	fmt.Println(c.Cookie("gc2"))
-	fmt.Println(c.Cookie("gc3"))
-	fmt.Println(c.Cookie("gc5"))
-	fmt.Println(c.Cookie("gc6"))
-	c4, err := c.Cookie("gc4")
+	authCookie, cookieErr := c.Cookie("aatt")
 
-	if nil != err {
-		fmt.Println("c4 error")
-		fmt.Println(err)
+	if nil != cookieErr {
+		SendResponse(c, "ERROR", "Decode error")
 	}
 
-	fmt.Println(c4)
+	email, emailDecodeErr := GetEmailFromToken(authCookie)
 
-	_, err = sql.Open("postgres", os.Getenv("DBU"))
+	if nil != emailDecodeErr {
+		// Set cookie not found as error message to confuse the attacker seeing it
+		SendResponse(c, "ERROR", "Cookie not found")
+	}
+
+	fmt.Println("Decoded email" + email)
+
+	_, err := sql.Open("postgres", os.Getenv("DBU"))
 
 	if nil != err {
 		fmt.Println(err)

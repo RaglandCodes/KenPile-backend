@@ -13,10 +13,10 @@ import (
 
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "http://localhost:2020")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET")
 		c.Next()
 	}
 }
@@ -27,10 +27,11 @@ func main() {
 		log.Fatal("$PORT must be set")
 	}
 
-	router := gin.New()
+	router := gin.Default()
+	// TODO see the difference bettween gin.New() and gin.Default()
 	//router.Use(gin.Logger())
-	//router.Use(CORSMiddleware())
-	//router.LoadHTMLGlob("templates/*.html")
+	router.Use(CORSMiddleware())
+	router.LoadHTMLGlob("templates/*.html")
 	//router.Static("/static", "static")
 
 	router.GET("/", func(c *gin.Context) {
@@ -41,9 +42,9 @@ func main() {
 	router.GET("/new", func(c *gin.Context) {
 		c.String(http.StatusOK, "namCC@s")
 	})
-	router.GET("/Ken", func(c *gin.Context) {
-		c.String(http.StatusOK, ken.Insert())
-	})
+	// router.GET("/Ken", func(c *gin.Context) {
+	// 	c.String(http.StatusOK, ken.Insert())
+	// })
 
 	router.POST("/createNewNote", ken.RouteCreateNewNote)
 	router.POST("/verifyIdToken", ken.RouteVerifyIDToken)

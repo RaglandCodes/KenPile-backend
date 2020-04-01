@@ -5,12 +5,13 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"hash"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"time"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,7 +22,39 @@ type GoogleTokenVerificationResponse struct {
 	//Email string
 }
 
+// GetEmailFromToken verifies token and returns email
+func GetEmailFromToken(token string) (string, error) {
+
+	tokenArray := strings.Split(token, ".")
+
+	payload, decodeError := base64.StdEncoding.DecodeString(tokenArray[0])
+
+	if nil != decodeError {
+		fmt.Println("decodeError")
+		fmt.Println(decodeError)
+		return "", errors.New("Decode error")
+	}
+
+	signedPayload := signPayload(string(payload))
+
+	if signedPayload == tokenArray[1] {
+
+		var p GoogleTokenVerificationResponse
+
+		unmarshalError := json.Unmarshal(payload, &p)
+
+		if unmarshalError != nil {
+			return "", errors.New("Unmarshal Error")
+		}
+
+		return p.Email, nil
+
+	}
+
+	return "", errors.New("Couldn't verify")
+}
 func signPayload(payload string) string {
+	// TODO take []byte as input instead of string
 	key := []byte(os.Getenv("CRYPTKEY"))
 	var h hash.Hash
 
@@ -32,9 +65,9 @@ func signPayload(payload string) string {
 	return base64.StdEncoding.EncodeToString(h.Sum(nil))
 }
 
-//VerifyToken Google Sign in
+//VerifyToken Google Sign and if successful, also return auth token
 func verifyGoogleToken(token string) (bool, string) {
-	var verifyTokenURL = "https://oauth2.googleapis.com/tokeninfo?id_token=" + token
+	verifyTokenURL := "https://oauth2.googleapis.com/tokeninfo?id_token=" + token
 
 	res, err := http.Get(verifyTokenURL)
 
@@ -44,10 +77,7 @@ func verifyGoogleToken(token string) (bool, string) {
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
-
-	//	fmt.Println(string(body))
-	fmt.Println("string(body)")
-	fmt.Println(signPayload(string(body)))
+	// TODO rename this body variable name.
 
 	if err != nil {
 		fmt.Println("Error in ioutil")
@@ -65,9 +95,6 @@ func verifyGoogleToken(token string) (bool, string) {
 		return false, ""
 	}
 
-	// fmt.Println(gResponse)
-	// fmt.Println("gResponse")
-
 	if nil != gResponse.Error {
 		return false, ""
 	}
@@ -76,37 +103,17 @@ func verifyGoogleToken(token string) (bool, string) {
 	newUserAdded := AddNewUser(gResponse.Email)
 
 	fmt.Println(newUserAdded)
-	return true, string(body)
+	return true, base64.StdEncoding.EncodeToString(body) + "." + signPayload(string(body))
 
 }
 
-//RouteVerifyIDToken ^)^
+//RouteVerifyIDToken verified token and sets cookie
 func RouteVerifyIDToken(c *gin.Context) {
 	fmt.Println("c.Request.Body")
-	verified, _ := verifyGoogleToken(c.Query("token"))
+	verified, authToken := verifyGoogleToken(c.Query("token"))
 	if verified {
-		http.SetCookie(c.Writer, &http.Cookie{
-			Name:     "gc6",
-			Value:    "url.QueryEscape(userInfo)",
-			MaxAge:   262800,
-			Path:     "/",
-			Domain:   "localhost",
-			SameSite: 1,
-			Secure:   false,
-			HttpOnly: false,
-		})
-		c.SetCookie("gc1", "someName", 60*60*24, "/", "google.com", false, false)
-		c.SetCookie("gc2", "someName", 60*60*24, "/", "localhost", false, false)
-		c.SetCookie("gc3", "someName", 262800, "/", "localhost", false, false)
-		c.SetCookie("gc4", "test", 3600, "/", "localhost", false, false)
-
-		http.SetCookie(c.Writer, &http.Cookie{
-			Name:     "gc5",
-			Value:    "12378",
-			Expires:  time.Now().Add(time.Hour),
-			HttpOnly: false,
-			Secure:   false,
-		})
+		c.SetCookie("aatt", authToken, 100000, "/", "localhost", false, true)
+		fmt.Println(authToken)
 		SendResponse(c, "OK", "Verified")
 	} else {
 		SendResponse(c, "Error", "Not verified")
