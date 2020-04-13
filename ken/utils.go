@@ -6,8 +6,8 @@ import "github.com/gin-gonic/gin"
 func SendResponse(c *gin.Context, status string, message interface{}) {
 
 	c.JSON(200, gin.H{
-		"status":  status,
-		"message": message,
+		"status": status,
+		"body":   message,
 	})
 
 	c.Abort()

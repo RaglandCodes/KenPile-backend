@@ -35,21 +35,18 @@ func main() {
 	//router.Static("/static", "static")
 
 	router.GET("/", func(c *gin.Context) {
-
 		c.HTML(http.StatusOK, "index.html", nil)
 	})
 
 	router.GET("/new", func(c *gin.Context) {
 		c.String(http.StatusOK, "namCC@s")
 	})
-	// router.GET("/Ken", func(c *gin.Context) {
-	// 	c.String(http.StatusOK, ken.Insert())
-	// })
 
 	router.POST("/createNewNote", ken.RouteCreateNewNote)
 	router.POST("/verifyIdToken", ken.RouteVerifyIDToken)
+	router.POST("/logBackIn", ken.RouteLogBackIn)
 
 	router.Run(":" + port)
 }
 
-// clr && go build -o bin/go-getting-started -v . && heroku local web
+// clear && go build -o bin/go-getting-started -v . && heroku local web

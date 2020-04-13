@@ -19,7 +19,37 @@ import (
 type GoogleTokenVerificationResponse struct {
 	Error *string `json:"error"`
 	Email string  `json:"email"`
+	Sub   string  `json:"sub"`
 	//Email string
+}
+
+// VerifyCookieToken reads the auth cookie
+func VerifyCookieToken(c *gin.Context) bool {
+	authCookie, cookieErr := c.Cookie("aatt")
+
+	if nil != cookieErr {
+		if nil != cookieErr {
+			fmt.Println(cookieErr)
+			fmt.Println("cookieErr ^ ")
+		}
+		return false
+	}
+
+	tokenArray := strings.Split(authCookie, ".")
+	payload, decodeErr := base64.StdEncoding.DecodeString(tokenArray[0])
+
+	if nil != decodeErr {
+		fmt.Println("decodeErr")
+		fmt.Println(decodeErr)
+		return false
+	}
+
+	signedPayload := signPayload(string(payload))
+	if signedPayload == tokenArray[1] {
+		return true
+	}
+
+	return false
 }
 
 // GetEmailFromToken verifies token and returns email
@@ -27,11 +57,11 @@ func GetEmailFromToken(token string) (string, error) {
 
 	tokenArray := strings.Split(token, ".")
 
-	payload, decodeError := base64.StdEncoding.DecodeString(tokenArray[0])
+	payload, decodeErr := base64.StdEncoding.DecodeString(tokenArray[0])
 
-	if nil != decodeError {
-		fmt.Println("decodeError")
-		fmt.Println(decodeError)
+	if nil != decodeErr {
+		fmt.Println("decodeErr")
+		fmt.Println(decodeErr)
 		return "", errors.New("Decode error")
 	}
 
@@ -100,23 +130,30 @@ func verifyGoogleToken(token string) (bool, string) {
 	}
 
 	// TODO handle this error
-	newUserAdded := AddNewUser(gResponse.Email)
+	newUserAdded := AddNewUser(gResponse.Email, gResponse.Sub)
 
 	fmt.Println(newUserAdded)
 	return true, base64.StdEncoding.EncodeToString(body) + "." + signPayload(string(body))
 
 }
 
+// RouteLogBackIn is used when user returns to the site
+func RouteLogBackIn(c *gin.Context) {
+	if VerifyCookieToken(c) {
+		SendResponse(c, "OK", "Verified")
+	} else {
+		SendResponse(c, "ERROR", "Not verified")
+	}
+}
+
 //RouteVerifyIDToken verified token and sets cookie
 func RouteVerifyIDToken(c *gin.Context) {
-	fmt.Println("c.Request.Body")
 	verified, authToken := verifyGoogleToken(c.Query("token"))
 	if verified {
 		c.SetCookie("aatt", authToken, 100000, "/", "localhost", false, true)
-		fmt.Println(authToken)
 		SendResponse(c, "OK", "Verified")
 	} else {
-		SendResponse(c, "Error", "Not verified")
+		SendResponse(c, "ERROR", "Not verified")
 	}
 
 }

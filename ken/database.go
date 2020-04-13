@@ -48,9 +48,10 @@ func CheckIfUserExists(emailToFind string) (bool, error) {
 }
 
 //AddNewUser returns ERROR EXISTS or ADDED
-func AddNewUser(email string) string {
-	fmt.Println("in add new user")
-	userExists, err := CheckIfUserExists(email)
+func AddNewUser(email string, sub string) string {
+
+	// Todo properly return error
+	userExists, err := CheckIfUserExists(email) // TODO use sub
 
 	if nil != err {
 		fmt.Println("error in userexists", err)
@@ -63,14 +64,14 @@ func AddNewUser(email string) string {
 
 	db, err := sql.Open("postgres", os.Getenv("DBU"))
 
-	insertStatment, err := db.Prepare("INSERT INTO users (email) VALUES ($1)")
+	insertStatment, err := db.Prepare("INSERT INTO users (email, sub) VALUES ($1, $2)")
 
 	if err != nil {
 		fmt.Println("error in prepare addnewuser", err)
 		return "ERROR"
 	}
 
-	insertRes, err := insertStatment.Exec(email)
+	insertRes, err := insertStatment.Exec(email, sub)
 
 	if err != nil {
 		fmt.Println("error in exec addnewuser", err)
@@ -85,27 +86,34 @@ func AddNewUser(email string) string {
 //RouteCreateNewNote returns OK or ERROR
 func RouteCreateNewNote(c *gin.Context) {
 
-	authCookie, cookieErr := c.Cookie("aatt")
+	// authCookie, cookieErr := c.Cookie("aatt")
 
-	if nil != cookieErr {
-		SendResponse(c, "ERROR", "Decode error")
+	// if nil != cookieErr {
+	// 	SendResponse(c, "ERROR", "Decode error")
+	// }
+
+	// email, emailDecodeErr := GetEmailFromToken(authCookie)
+
+	// if nil != emailDecodeErr {
+	// 	// Set cookie not found as error message to confuse the attacker seeing it
+	// 	SendResponse(c, "ERROR", "Cookie not found")
+	// }
+
+	// fmt.Println("Decoded email" + email)
+
+	if VerifyCookieToken(c) == false {
+		SendResponse(c, "ERROR", "Auth Error")
+		return
 	}
 
-	email, emailDecodeErr := GetEmailFromToken(authCookie)
-
-	if nil != emailDecodeErr {
-		// Set cookie not found as error message to confuse the attacker seeing it
-		SendResponse(c, "ERROR", "Cookie not found")
-	}
-
-	fmt.Println("Decoded email" + email)
-
-	_, err := sql.Open("postgres", os.Getenv("DBU"))
+	db, err := sql.Open("postgres", os.Getenv("DBU"))
+	defer db.Close()
 
 	if nil != err {
 		fmt.Println(err)
 		fmt.Println("error in db open new note")
-		SendResponse(c, "ERROR", "Error in opening database")
+		SendResponse(c, "ERROR", "DB Error")
+		return
 	}
 
 	//BOMB
