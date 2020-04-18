@@ -85,32 +85,40 @@ func AddNewUser(email string, sub string) string {
 
 //RouteCreateNewNote returns OK or ERROR
 func RouteCreateNewNote(c *gin.Context) {
-
-	// authCookie, cookieErr := c.Cookie("aatt")
-
-	// if nil != cookieErr {
-	// 	SendResponse(c, "ERROR", "Decode error")
-	// }
-
-	// email, emailDecodeErr := GetEmailFromToken(authCookie)
-
-	// if nil != emailDecodeErr {
-	// 	// Set cookie not found as error message to confuse the attacker seeing it
-	// 	SendResponse(c, "ERROR", "Cookie not found")
-	// }
-
-	// fmt.Println("Decoded email" + email)
-
 	if VerifyCookieToken(c) == false {
 		SendResponse(c, "ERROR", "Auth Error")
 		return
 	}
 
+	sub, subErr := GetSubFromCookie(c)
+
+	if nil != subErr {
+		fmt.Println(subErr)
+		fmt.Println("subErr ^ ")
+		SendResponse(c, "ERROR", "Auth Error")
+	}
+
 	db, err := sql.Open("postgres", os.Getenv("DBU"))
 	defer db.Close()
-
+	// TODO check if note with that ID exisis
 	if nil != err {
 		fmt.Println(err)
+		fmt.Println("error in db open new note")
+		SendResponse(c, "ERROR", "DB Error")
+		return
+	}
+	newNoteID := c.Query("id")
+	insertStatment, err := db.Prepare("INSERT INTO notes (id, owner) VALUES ($1, $2)")
+	if nil != err {
+		fmt.Println(err)
+		fmt.Println("error in db open new note")
+		SendResponse(c, "ERROR", "DB Error")
+		return
+	}
+
+	_, insertErr := insertStatment.Exec(newNoteID, sub)
+	if nil != insertErr {
+		fmt.Println(insertErr)
 		fmt.Println("error in db open new note")
 		SendResponse(c, "ERROR", "DB Error")
 		return
@@ -122,26 +130,26 @@ func RouteCreateNewNote(c *gin.Context) {
 }
 
 //Insert a random
-func Insert() string {
+// func Insert() string {
 
-	db, err := sql.Open("postgres", os.Getenv("DBU"))
+// 	db, err := sql.Open("postgres", os.Getenv("DBU"))
 
-	rows, err := db.Query("SELECT text FROM notes")
-	if err != nil {
-		return "ERROR"
-	}
-	defer rows.Close()
-	res := ""
-	for rows.Next() {
-		var email string
-		if err := rows.Scan(&email); err != nil {
-			fmt.Println(err)
-			return "ERROR"
-		}
-		res += email
-		fmt.Println(email)
-	}
+// 	rows, err := db.Query("SELECT text FROM notes")
+// 	if err != nil {
+// 		return "ERROR"
+// 	}
+// 	defer rows.Close()
+// 	res := ""
+// 	for rows.Next() {
+// 		var email string
+// 		if err := rows.Scan(&email); err != nil {
+// 			fmt.Println(err)
+// 			return "ERROR"
+// 		}
+// 		res += email
+// 		fmt.Println(email)
+// 	}
 
-	fmt.Println(err)
-	return res
-}
+// 	fmt.Println(err)
+// 	return res
+// }

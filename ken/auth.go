@@ -28,10 +28,8 @@ func VerifyCookieToken(c *gin.Context) bool {
 	authCookie, cookieErr := c.Cookie("aatt")
 
 	if nil != cookieErr {
-		if nil != cookieErr {
-			fmt.Println(cookieErr)
-			fmt.Println("cookieErr ^ ")
-		}
+		fmt.Println(cookieErr)
+		fmt.Println("cookieErr ^ ")
 		return false
 	}
 
@@ -52,7 +50,36 @@ func VerifyCookieToken(c *gin.Context) bool {
 	return false
 }
 
-// GetEmailFromToken verifies token and returns email
+//GetSubFromCookie returns sub from the cookie
+func GetSubFromCookie(c *gin.Context) (string, error) {
+	authCookie, cookieErr := c.Cookie("aatt")
+
+	if nil != cookieErr {
+		return "", cookieErr
+	}
+
+	tokenArray := strings.Split(authCookie, ".")
+	payload, decodeErr := base64.StdEncoding.DecodeString(tokenArray[0])
+
+	if nil != decodeErr {
+		return "", decodeErr
+	}
+
+	var p GoogleTokenVerificationResponse
+
+	if unmarshalErr := json.Unmarshal(payload, &p); unmarshalErr != nil {
+		return "", errors.New("unmarshalErr")
+	}
+
+	// if unmarshalErr != nil {
+	// 	return "", unmarshalError
+	// }
+
+	return p.Sub, nil
+
+}
+
+// GetEmailFromToken verifies token and returns email. Don't use this func
 func GetEmailFromToken(token string) (string, error) {
 
 	tokenArray := strings.Split(token, ".")

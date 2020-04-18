@@ -42,9 +42,13 @@ func main() {
 		c.String(http.StatusOK, "namCC@s")
 	})
 
-	router.POST("/createNewNote", ken.RouteCreateNewNote)
+	//auth
 	router.POST("/verifyIdToken", ken.RouteVerifyIDToken)
 	router.POST("/logBackIn", ken.RouteLogBackIn)
+
+	// notes
+	router.POST("/createNewNote", ken.RouteCreateNewNote)
+	router.POST("/updateNote", ken.RouteUpdateNote)
 
 	router.Run(":" + port)
 }
