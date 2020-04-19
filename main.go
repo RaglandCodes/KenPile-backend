@@ -49,6 +49,8 @@ func main() {
 	// notes
 	router.POST("/createNewNote", ken.RouteCreateNewNote)
 	router.POST("/updateNote", ken.RouteUpdateNote)
+	router.GET("/fetchAllNotes", ken.RouteFetchAllNotes)
+	router.GET("/fetchNote", ken.RouteFetchNote)
 
 	router.Run(":" + port)
 }
